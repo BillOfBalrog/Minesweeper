@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css\main.css">
+    <title>[UNDER CONSTRUCTION] Minesweeper - better than Bill Gates' version</title>
+</head>
+
+<body onload="onInit()" oncontextmenu="return false">
+    <div class="container">
+        <div class="headers">
+            <!-- <h2>MineNotYoursSweeper</h2> -->
+            <label class="remain-mines">Remaining mines: <span></span></label>
+            <label class="time-container">Time: <span class="minutes"></span><span class="seconds">0</span><span class="milli-seconds"></span>
+        </div>
+        <div class="button-container">
+            <button class="button mode1" onclick="changeGameModes(4, 2)" data-tooltip="Why is the touch screen not working on this?">Rookie</button>
+            <button class="button mode1" onclick="changeGameModes(8, 14)" data-tooltip="I've stepped on a few mines back in my day">Intermediate</button>
+            <button class="button mode2" onclick="changeGameModes(12, 32)" data-tooltip="I used to bench 405lbs in high school">Hold my beer</button>
+        </div>
+        <div class="button-container">
+            <button id="gameStateButton" class="smiley" onclick="resetSmileyButton()">😊</button>
+        </div>
+        <table class="board-container">
+            
+            <tbody class="board"></tbody>
+            <label class="alert-status"><span class="alert-msg">Lives: </span><span class="lives">3</span></label>
+        </table>
+        
+        <footer class="footer">
+            <p>Boaz Teller</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/timer.js"></script>
+</body>
+
+</html>
