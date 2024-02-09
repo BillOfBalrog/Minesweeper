@@ -188,25 +188,25 @@ function onCellMarked(elCell, i, j) {
 }
 
 function checkGameOver() {
-    var livesSpan = document.querySelector('.lives')
-    var elLabel = document.querySelector('.alert-msg')
-    livesSpan.textContent = gGame.lives
-    
+    setInnerText('lives', gGame.lives)
+
     if (gGame.lives === 0) {
-        elLabel.textContent = 'Game over!'
-        livesSpan.textContent = ''
         loseGame()
-        displayRestOfMines()
-        gGame.isOn = false
+        endGameCommands()
         return
     }
 
     if (gGame.shownCount + gLevel.MINES === gLevel.SIZE ** 2) {
-        elLabel.textContent = 'You won! Woohoo!'
-        livesSpan.textContent = ''
-        displayRestOfMines()
-        gGame.isOn = false
+        winGame()
+        endGameCommands()
     } 
+}
+
+function endGameCommands() {
+    stopTimer()
+    setInnerText('lives', '')
+    displayRestOfMines()
+    gGame.isOn = false
 }
 
 function resetgGame() {
@@ -220,13 +220,10 @@ function resetgGame() {
 }
 
 function handleDisplay() {
-    document.getElementById('gameStateButton').className = 'smiley'
-    document.getElementById('gameStateButton').textContent = '😊'
+    setInnerText('smiley','😊')
 
-    var livesSpan = document.querySelector('.lives');
-    var elLabel = document.querySelector('.alert-msg')
-    elLabel.textContent = 'Lives: '
-    livesSpan.textContent = gGame.lives
+    setInnerText('lives',gGame.lives)
+    setInnerText('alert-msg','Lives: ')
 
     resetRemainMinesDisplay()
 }
@@ -242,30 +239,32 @@ function displayRestOfMines() {
             }
         }
     }
-	stopTimer()
 }
 
 function loseGame() {
-    document.getElementById('gameStateButton').className = 'sad'
-    document.getElementById('gameStateButton').textContent = '😞'
+    setInnerText('smiley','😞')
+    setInnerText('alert-msg','Game over!')
+}
+
+function winGame() {
+    setInnerText('smiley','😎')
+    setInnerText('alert-msg','You won! Woohoo!')
 }
 
 function updateRemainMinesDisplay() {
-    const elRemainMines = document.querySelector('.remain-mines span')
-    const remainMines = gMines - gGame.markedCount
-    elRemainMines.innerText = remainMines
+    setInnerText('remain-mines span', gMines - gGame.markedCount)
 }
 
 function resetRemainMinesDisplay() {
-    const elRemainMines = document.querySelector('.remain-mines span')
-    elRemainMines.innerText = ''
+    setInnerText('remain-mines span', '')
 }
 
-function setClickedAndPrintOnBoard(i, j) {
-    const elCell = getElementByIndx(i, j)
+function setClickedAndPrintOnBoard(i, j) {   
     const cell = gBoard[i][j]
     if (!cell.isShown) gGame.shownCount++
     cell.isShown = true
+
+    const elCell = getElementByIndx(i, j)
     elCell.classList.add('clicked')
     elCell.innerText = cell.minesAroundCount > 0 ? cell.minesAroundCount + '' : ''
 }
@@ -280,4 +279,8 @@ function getElementByIndx(i, j) {
     const callSelector = '.' + className
     const elCell = document.querySelector(callSelector)
     return elCell
+}
+
+function setInnerText(el, val) {
+    document.querySelector(`.${el}`).innerText = val
 }
