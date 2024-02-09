@@ -142,7 +142,7 @@ body {
     font-size: 16px; 
 }
 
-.smiley, .sad {
+.smiley{
     font-size: 24px; 
     cursor: pointer;
 }
