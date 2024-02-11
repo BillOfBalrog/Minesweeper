@@ -2,49 +2,60 @@
 
 const MINE = '💣' 
 const FLAG = '🚩'
-
+ 
+const gLevel = { 
+    SIZE: 4, 
+    MINES: 2
+} 
 const gGame = { 
     isOn: false, 
     shownCount: 0, 
     markedCount: 0, 
     secsPassed: 0,
+    currMines: 0,
     lives: 3
-} 
-const gLevel = { 
-    SIZE: 4, 
-    MINES: 2
-} 
+}
 var gBoard
 var gIsFirstClick
 var gFirstPos = {}
 var gMines
-var gCurrMode
+var gSafeClicks
+var gMega = {
+    hints: 2,
+    isEnabled: false,
+    Pos: []
+}
+var gHints
+var gHintIsEnabled
+var gRollbackBoard = []
+var gTimeout
+var gExterminator
+var gSafeClickIsEnabled
   
 function onInit() {
     gGame.isOn = true
-    gCurrMode = gLevel
-    gMines = gLevel.MINES
-    gIsFirstClick = false
+    setFlagsAndOthers() 
+    updateSpans()
     gBoard = buildBoard()
-    renderBoard(gBoard)
+    renderBoard2(gBoard)
 }
 
 function startGame() { 
     setMinesOnBoard(gBoard) 
     setMinesNegsCount(gBoard)
+    
     startTimer()
 }
 
 function resetSmileyButton() {
-    changeGameModes(gCurrMode.SIZE, gCurrMode.MINES)    
+    changeGameModes()    
 }
 
-function changeGameModes(size, mines) {
+function changeGameModes(size = gLevel.SIZE, mines = gLevel.MINES) {
     gLevel.SIZE = size
     gLevel.MINES = mines
     resetgGame()
     gBoard = buildBoard()
-    gIsFirstClick = false
     clearTimer()
     onInit()
 }
@@ -69,20 +80,34 @@ function createCell() {
     }
 }
 
-function renderBoard(board) {
+function renderBoard2(board) {
     var strHTML = ''
     for (var i = 0; i < board.length; i++) {
         strHTML += '<tr>'
         for (var j = 0; j < board[0].length; j++) {
             const cell = board[i][j]
+            const minesAroundCell = cell.minesAroundCount > 0 ? cell.minesAroundCount + '' : ''
             const className = `cell cell-${i}-${j}`
 
-            if (cell.isMine) {
-                strHTML += `<td class="${className} mine" onclick="onCellClicked(this, ${i}, ${j})" 
-                oncontextmenu="onCellMarked(this, ${i}, ${j})")"></td>`
+            if (cell.isMine && cell.isShown) {
+                strHTML += `<td class="${className} mined clicked" onclick="onCellClicked(this, ${i}, ${j})" 
+                oncontextmenu="onCellMarked(this, ${i}, ${j})")">${MINE}</td>`
             } 
-            else { strHTML += `<td class="${className}" onclick="onCellClicked(this, ${i}, ${j})" 
-                        oncontextmenu="onCellMarked(this, ${i}, ${j})")"></td>`
+            else if (cell.isShown) { 
+                strHTML += `<td class="${className} clicked" onclick="onCellClicked(this, ${i}, ${j})" 
+                oncontextmenu="onCellMarked(this, ${i}, ${j})")">${minesAroundCell}</td>`
+            } 
+            // else if (cell.isMine && !cell.isShown) { 
+            //     strHTML += `<td class="${className} mine" onclick="onCellClicked(this, ${i}, ${j})" 
+            //     oncontextmenu="onCellMarked(this, ${i}, ${j})")">${minesAroundCell}</td>`
+            // }
+            else if (cell.isMarked) { 
+                strHTML += `<td class="${className} marked" onclick="onCellClicked(this, ${i}, ${j})" 
+                oncontextmenu="onCellMarked(this, ${i}, ${j})")">${FLAG}</td>`
+            } 
+            else {
+                strHTML += `<td class="${className}" onclick="onCellClicked(this, ${i}, ${j})" 
+                oncontextmenu="onCellMarked(this, ${i}, ${j})")"></td>`
             }
         }
         strHTML += '</tr>'
@@ -108,43 +133,52 @@ function setMinesOnBoard(board) {
 function setMinesNegsCount(board) {
     for (var i = 0; i < board.length; i++) {
         for (var j = 0; j < board[0].length; j++) {
-            getMinesNegsCount(i, j, board)
+            getAndSetMinesNegsCount(i, j, board)
         }
     }
 }
 
-function getMinesNegsCount(cellI, cellJ, board) {
+function getAndSetMinesNegsCount(cellI, cellJ, board) {
+    var count = 0
     for (var i = cellI - 1; i <= cellI + 1; i++) {
         if (i < 0 || i >= board.length) continue
         for (var j = cellJ - 1; j <= cellJ + 1; j++) {
             if (i === cellI && j === cellJ) continue
             if (j < 0 || j >= board[i].length) continue
             if (board[i][j].isMine) {
-                board[cellI][cellJ].minesAroundCount++
+                count++
             }
         }
     }
-    return board[cellI][cellJ].minesAroundCount
-}
-
-function expandShown(cellI, cellJ) {
-    for (var i = cellI - 1; i <= cellI + 1; i++) {
-        if (i < 0 || i >= gBoard.length) continue
-        for (var j = cellJ - 1; j <= cellJ + 1; j++) {
-            if (i === cellI && j === cellJ) continue
-            if (j < 0 || j >= gBoard[i].length) continue
-            
-            const cell = gBoard[i][j]
-            if (cell.isMine || cell.isMarked) continue
-            
-            setClickedAndPrintOnBoard(i, j)
-        }
-    }
+    board[cellI][cellJ].minesAroundCount = count
+    return count
 }
 
 function onCellClicked(elCell, i, j)  {
     if (elCell.classList.contains('marked') || elCell.classList.contains('clicked')
-        || !gGame.isOn || gGame.lives <= 0) return
+        || !gGame.isOn || gGame.lives <= 0 || gTimeout) return
+
+    if (gMega.isEnabled && gMega.hints) {
+        const Pos = {}
+        Pos.i = i
+        Pos.j = j
+        
+        if (gMega.hints === 2) {
+            gMega.Pos.push(Pos)
+            gMega.hints--
+            return
+        }         
+        gMega.Pos.push(Pos)
+        gMega.hints--
+
+        megaHint(gMega.Pos)
+        return
+    }
+    
+    if (gHintIsEnabled) {
+        revealHint(elCell, i, j)
+        return
+    }
     
     if (!gIsFirstClick) {
         gIsFirstClick = true
@@ -152,15 +186,17 @@ function onCellClicked(elCell, i, j)  {
         gFirstPos.j = j
         startGame()
     }
-    
-    elCell.classList.add('clicked')
+
+    gRollbackBoard.push(deepCopyBoard(gBoard))
 
     if (!gBoard[i][j].isMine) {
+        if (gBoard[i][j].minesAroundCount === 0 ) fullExpansion(i, j)
         setClickedAndPrintOnBoard(i, j)
-        expandShown(i, j)
+        renderBoard2(gBoard)
     } else {
         gGame.lives--
         gMines--
+        gGame.currMines--
         setClickedAndPrintMine(elCell, i, j)
     }
     updateRemainMinesDisplay()
@@ -170,7 +206,7 @@ function onCellClicked(elCell, i, j)  {
 function onCellMarked(elCell, i, j) {
     const cell = gBoard[i][j]
     if (!cell.isMarked && gGame.markedCount >= gMines
-        || !gGame.isOn || gGame.lives <= 0) {
+        || !gGame.isOn || gGame.lives <= 0 || elCell.classList.contains('clicked') || gTimeout) {
         return
     }
 
@@ -182,6 +218,7 @@ function onCellMarked(elCell, i, j) {
         elCell.innerText = FLAG
     }
 
+    setInnerText('flags', gGame.markedCount)
     updateRemainMinesDisplay()
     elCell.classList.toggle('marked')
     cell.isMarked = !cell.isMarked
@@ -196,9 +233,12 @@ function checkGameOver() {
         return
     }
 
-    if (gGame.shownCount + gLevel.MINES === gLevel.SIZE ** 2) {
+    if (Number(gGame.shownCount) === Number(gLevel.SIZE ** 2) ||
+        gGame.shownCount + Math.floor(gGame.currMines) === gLevel.SIZE ** 2 ||
+        (gLevel.SIZE ** 2) - gGame.currMines === gGame.shownCount) {
         winGame()
         endGameCommands()
+        return
     } 
 }
 
@@ -215,17 +255,6 @@ function resetgGame() {
     gGame.markedCount = 0
     gGame.secsPassed = 0
     gGame.lives = 3
-
-    handleDisplay()
-}
-
-function handleDisplay() {
-    setInnerText('smiley','😊')
-
-    setInnerText('lives',gGame.lives)
-    setInnerText('alert-msg','Lives: ')
-
-    resetRemainMinesDisplay()
 }
 
 function displayRestOfMines() {
@@ -235,6 +264,8 @@ function displayRestOfMines() {
             if (cell.isMine && !cell.isShown) {
                 const elCell = getElementByIndx(i, j)
                 elCell.style.background = 'red'
+                elCell.classList.add('clicked')
+
                 elCell.innerText = MINE
             }
         }
@@ -243,34 +274,34 @@ function displayRestOfMines() {
 
 function loseGame() {
     setInnerText('smiley','😞')
-    setInnerText('alert-msg','Game over!')
+    setInnerText('tooltip','Game over!')
 }
 
 function winGame() {
     setInnerText('smiley','😎')
-    setInnerText('alert-msg','You won! Woohoo!')
+    setInnerText('tooltip','You won! Woohoo!')
 }
 
 function updateRemainMinesDisplay() {
-    setInnerText('remain-mines span', gMines - gGame.markedCount)
+    setInnerText('mines', gMines)
+    // setInnerText('mines', gMines - gGame.markedCount)
 }
 
 function resetRemainMinesDisplay() {
-    setInnerText('remain-mines span', '')
+    setInnerText('mines', g.gLevel.MINES)
 }
 
 function setClickedAndPrintOnBoard(i, j) {   
     const cell = gBoard[i][j]
     if (!cell.isShown) gGame.shownCount++
     cell.isShown = true
-
-    const elCell = getElementByIndx(i, j)
-    elCell.classList.add('clicked')
-    elCell.innerText = cell.minesAroundCount > 0 ? cell.minesAroundCount + '' : ''
 }
 
 function setClickedAndPrintMine(elCell, i, j) {
     gBoard[i][j].isShown = true
+    gGame.shownCount++
+
+    elCell.classList.add('clicked')
     elCell.innerText = MINE
 }
 
@@ -284,3 +315,32 @@ function getElementByIndx(i, j) {
 function setInnerText(el, val) {
     document.querySelector(`.${el}`).innerText = val
 }
+
+function updateSpans() {
+    setInnerText('lives', '3')
+    setInnerText('mines', gLevel.MINES)
+    setInnerText('flags', '0')
+    setInnerText('timer', '0')
+    setInnerText('smiley','😊')
+    setInnerText('safe-click', gSafeClicks)
+    setInnerText('hints', gHints)
+    // setInnerText('tooltip', '')
+}
+
+function setFlagsAndOthers() {
+    gGame.currMines = gLevel.MINES
+    gMines = gLevel.MINES
+    gSafeClicks = 3
+    gHints = 3
+    gHintIsEnabled = false
+    gMega = {
+        hints: 2,
+        isEnabled: false,
+        Pos: []
+    }
+    gIsFirstClick = false
+    gExterminator = true
+    gSafeClickIsEnabled = false
+    
+}
+

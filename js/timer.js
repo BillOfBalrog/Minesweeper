@@ -10,7 +10,7 @@ function startTimer() {
         const seconds = Math.floor(elapsedTime / 1000);
 
         gGame.secsPassed = seconds
-        document.querySelector('.time-container .seconds').innerText = seconds;
+        document.querySelector('.timer').innerText = seconds;
 
     }, 1000)
 }
@@ -21,5 +21,5 @@ function stopTimer() {
 
 function clearTimer() {
     clearInterval(gTimerInterval)
-    document.querySelector('.time-container .seconds').innerText = '0'
+    document.querySelector('.timer').innerText = '0'
 }

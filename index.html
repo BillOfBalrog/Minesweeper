@@ -10,33 +10,64 @@
 
 <body onload="onInit()" oncontextmenu="return false">
     <div class="container">
-        <div class="headers">
-            <!-- <h2>MineNotYoursSweeper</h2> -->
-            <label class="remain-mines">Remaining mines: <span></span></label>
-            <label class="time-container">Time: <span class="minutes"></span><span class="seconds">0</span><span class="milli-seconds"></span>
+        <div class="controls1">
+            <div>❤️ <span class="lives"></span></div>
+            <div>💣 <span class="mines"></span></div>
+            <div>⏰ <span class="timer"></span></div>
+            <div>🚩 <span class="flags"></span></div>
         </div>
-        <div class="button-container">
-            <button class="button mode1" onclick="changeGameModes(4, 2)" data-tooltip="Why is the touch screen not working on this?">Rookie</button>
-            <button class="button mode1" onclick="changeGameModes(8, 14)" data-tooltip="I've stepped on a few mines back in my day">Intermediate</button>
-            <button class="button mode2" onclick="changeGameModes(12, 32)" data-tooltip="I used to bench 405lbs in high school">Hold my beer</button>
+        <div>
+            <div class="controls clickable">
+                <div>
+                    <div onclick="getHintClick()" class="control-icon">💡 <span class="hints"></div>
+                    <div onclick="getHintClick()">Hints</div>
+                </div>
+                <div>
+                    <div onclick="safeClick()" class="safe-click-icon">⛑️ <span  class="safe-click"></span></div>
+                    <div onclick="safeClick()">Safe Click</div>
+                </div>
+                <div>
+                    <div onclick="rollBackBackOneStep()" class="undo-icon">🔄 <span class="undo"></span></div>
+                    <div onclick="rollBackBackOneStep()">Undo</div>
+                </div>
+                <div class="exterminator-en">
+                    <div onclick="exterminator(this)" class="exterminator-icon">💀 <span class="exterminator"></span></div>
+                    <div onclick="exterminator(this)">Exterminator</div>
+                </div>
+                <div>
+                    <div onclick="darkModeToggle()" class="dark-mode-icon">🌜<span></span></div>
+                    <div onclick="darkModeToggle()">Dark/Light</div>
+                </div>
+                <div>
+                    <div onclick="onMegaHintClick()" class="mega-hint-icon">📢<span></span></div>
+                    <div onclick="onMegaHintClick()">Mega Hint</div>
+                </div>
+            </div>
+
         </div>
-        <div class="button-container">
-            <button class="smiley" onclick="resetSmileyButton()">😊</button>
+        <div class="game-modes">
+            <button class="btn-modes mode1" onclick="changeGameModes(4, 2)">Rookie</button>
+            <button class="btn-modes mode1" onclick="changeGameModes(8, 14)">Intermediate</button>
+            <button class="btn-modes mode2" onclick="changeGameModes(12, 32)">Hold my beer</button>
         </div>
-        <table class="board-container">
-            
-            <tbody class="board"></tbody>
-            <label class="alert-status"><span class="alert-msg">Lives: </span><span class="lives">3</span></label>
-        </table>
-        
-        <footer class="footer">
-            <p>Boaz Teller</p>
-        </footer>
+        <div>
+            <button class="smiley" onclick="resetSmileyButton()">😊 </button>  
+        </div>
+        <div class="top1"><span class="tooltip"></span></div>
+        <div>
+            <table class="board-container">
+                <tbody class="board"></tbody>
+            </table>
+        </div>
+        <div class="top2"></span></div>
     </div>
+
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/timer.js"></script>
+    <script src="js/bonus.js"></script>
+    <footer class="footer"><p>Boaz Teller</p></footer>
 </body>
 
 </html>
