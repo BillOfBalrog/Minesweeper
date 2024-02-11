@@ -324,7 +324,7 @@ function updateSpans() {
     setInnerText('smiley','😊')
     setInnerText('safe-click', gSafeClicks)
     setInnerText('hints', gHints)
-    // setInnerText('tooltip', '')
+    setInnerText('tooltip', '')
 }
 
 function setFlagsAndOthers() {
